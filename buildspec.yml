@@ -6,54 +6,42 @@ env:
     IMAGE_REPO_NAME: galaxy-classifier-train
     DOCKERFILE_PATH: docker/Dockerfile.train
     AWS_DEFAULT_REGION: us-east-1
-    # Optional: set this in the CodeBuild project instead of hardcoding
-    # SAGEMAKER_PIPELINE_NAME: galaxy-classifier-pipeline
 
 phases:
   install:
     commands:
-      - echo "Entered install phase"
-      - python --version || true
-      - aws --version
-      - echo "Commit ${CODEBUILD_RESOLVED_SOURCE_VERSION:-unknown}"
+      - 'echo "Entered install phase"'
+      - 'python --version || true'
+      - 'aws --version'
+      - 'echo "Commit ${CODEBUILD_RESOLVED_SOURCE_VERSION:-unknown}"'
 
   pre_build:
     commands:
-      - echo "Entered pre_build phase"
-      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-      - ECR_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
-      - IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"
-      - SHORT_TAG=$(echo "$IMAGE_TAG" | cut -c1-7)
-      - echo "ECR URI $ECR_URI"
-      - echo "Image tag $IMAGE_TAG"
-      - aws ecr describe-repositories --repository-names "$IMAGE_REPO_NAME" >/dev/null 2>&1 || aws ecr create-repository --repository-name "$IMAGE_REPO_NAME"
-      - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+      - 'echo "Entered pre_build phase"'
+      - 'ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)'
+      - 'ECR_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"'
+      - 'IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"'
+      - 'SHORT_TAG=$(echo "$IMAGE_TAG" | cut -c1-7)'
+      - 'echo "ECR URI $ECR_URI"'
+      - 'echo "Image tag $IMAGE_TAG"'
+      - 'aws ecr describe-repositories --repository-names "$IMAGE_REPO_NAME" >/dev/null 2>&1 || aws ecr create-repository --repository-name "$IMAGE_REPO_NAME"'
+      - 'aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"'
 
   build:
     commands:
-      - echo "Entered build phase"
-      - docker build -f "$DOCKERFILE_PATH" -t "${IMAGE_REPO_NAME}:${SHORT_TAG}" .
-      - docker tag "${IMAGE_REPO_NAME}:${SHORT_TAG}" "${ECR_URI}:${SHORT_TAG}"
-      - docker tag "${IMAGE_REPO_NAME}:${SHORT_TAG}" "${ECR_URI}:latest"
+      - 'echo "Entered build phase"'
+      - 'docker build -f "$DOCKERFILE_PATH" -t "${IMAGE_REPO_NAME}:${SHORT_TAG}" .'
+      - 'docker tag "${IMAGE_REPO_NAME}:${SHORT_TAG}" "${ECR_URI}:${SHORT_TAG}"'
+      - 'docker tag "${IMAGE_REPO_NAME}:${SHORT_TAG}" "${ECR_URI}:latest"'
 
   post_build:
     commands:
-      - echo "Entered post_build phase"
-      - docker push "${ECR_URI}:${SHORT_TAG}"
-      - docker push "${ECR_URI}:latest"
-      - printf '{"ImageURI":"%s"}' "${ECR_URI}:${SHORT_TAG}" > imageDetail.json
-      - |
-        if [ -n "${SAGEMAKER_PIPELINE_NAME:-}" ]; then
-          echo "Starting SageMaker pipeline: ${SAGEMAKER_PIPELINE_NAME}"
-          aws sagemaker start-pipeline-execution \
-            --pipeline-name "${SAGEMAKER_PIPELINE_NAME}" \
-            --pipeline-execution-display-name "build-${CODEBUILD_BUILD_NUMBER}" \
-            --pipeline-parameters \
-              Name=ImageUri,Value="${ECR_URI}:${SHORT_TAG}" \
-              Name=GitCommitId,Value="${CODEBUILD_RESOLVED_SOURCE_VERSION:-unknown}"
-        else
-          echo "SAGEMAKER_PIPELINE_NAME not set; skipping pipeline execution."
-        fi
+      - 'echo "Entered post_build phase"'
+      - 'docker push "${ECR_URI}:${SHORT_TAG}"'
+      - 'docker push "${ECR_URI}:latest"'
+      - 'printf ''{"ImageURI":"%s"}'' "${ECR_URI}:${SHORT_TAG}" > imageDetail.json'
+      - 'echo "Wrote imageDetail.json"'
+      - 'cat imageDetail.json'
 
 artifacts:
   files:

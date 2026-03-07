@@ -1,8 +1,10 @@
 import sys
 from pathlib import Path
+
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))
 
 import argparse
+import json
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
@@ -11,33 +13,65 @@ from torchvision import transforms
 from galaxy_classifier.data.splits import create_train_val_test_splits, build_stage_dfs
 from galaxy_classifier.datasets.image_dataset import ImgDFDataset
 from galaxy_classifier.models.resnet import make_resnet18
+from galaxy_classifier.models.cnn import GalaxyCNN
 from galaxy_classifier.models.evaluate import eval_model_full
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Evaluate trained galaxy models.")
-    parser.add_argument("--input-csv", type=str, default="data/processed/all_data.csv")
-    parser.add_argument("--model-dir", type=str, default="artifacts/models")
-    parser.add_argument("--eval-dir", type=str, default="artifacts/evaluations")
+    parser.add_argument("--input-csv", type=str, default="/opt/ml/processing/input/data/all_data.csv")
+    parser.add_argument("--model-dir", type=str, default="/opt/ml/processing/model")
+    parser.add_argument("--eval-dir", type=str, default="/opt/ml/processing/evaluation")
     parser.add_argument("--img-size", type=int, default=224)
-    parser.add_argument("--batch-size", type=int, default=64)
+    parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--num-workers", type=int, default=2)
     parser.add_argument("--test-size", type=float, default=0.1)
     parser.add_argument("--val-size", type=float, default=0.2)
     parser.add_argument("--random-state", type=int, default=42)
+    parser.add_argument("--max-rows", type=int, default=None)
     return parser.parse_args()
 
+
+def compute_accuracy(results_df: pd.DataFrame) -> float:
+    return float(results_df["correct"].mean())
+
+
+def load_resnet_checkpoint(path: Path, num_classes: int):
+    ckpt = torch.load(path, map_location="cpu", weights_only=False)
+    model = make_resnet18(num_classes=num_classes)
+    model.load_state_dict(ckpt["model_state"])
+    model.eval()
+    return model
+
+
+def load_galaxycnn_checkpoint(path: Path, num_classes: int):
+    ckpt = torch.load(path, map_location="cpu", weights_only=False)
+    model = GalaxyCNN(num_classes=num_classes)
+    model.load_state_dict(ckpt["model_state"])
+    model.eval()
+    return model
+
+
 def main(args):
+    print("Evaluation args:")
+    print(json.dumps(vars(args), indent=2))
+
     input_csv = Path(args.input_csv)
     model_dir = Path(args.model_dir)
     eval_dir = Path(args.eval_dir)
+
     eval_dir.mkdir(parents=True, exist_ok=True)
 
     df = pd.read_csv(input_csv)
+
+    if args.max_rows is not None:
+        df = df.sample(min(args.max_rows, len(df)), random_state=args.random_state).copy()
+
     train_df, val_df, test_df = create_train_val_test_splits(
         df,
         test_size=args.test_size,
         val_size=args.val_size,
-        random_state=args.random_state
+        random_state=args.random_state,
     )
     stage_dfs = build_stage_dfs(train_df, val_df, test_df)
 
@@ -52,43 +86,54 @@ def main(args):
         ImgDFDataset(stage_dfs["s1_test"], val_tf),
         batch_size=args.batch_size,
         shuffle=False,
-        num_workers=args.num_workers
+        num_workers=args.num_workers,
     )
 
     s2_test_dl = DataLoader(
         ImgDFDataset(stage_dfs["s2_test"], val_tf),
         batch_size=args.batch_size,
         shuffle=False,
-        num_workers=args.num_workers
+        num_workers=args.num_workers,
     )
 
     s1_id_to_label = {0: "other", 1: "galaxy"}
     s2_id_to_label = {0: "elliptical", 1: "disk"}
 
-    ckpt_s1 = torch.load(
-        model_dir / "resnet18_stage1_best.pt",
-        map_location="cpu",
-        weights_only=False,
-    )
-    model_s1 = make_resnet18(num_classes=2)
-    model_s1.load_state_dict(ckpt_s1["model_state"])
+    model_s1_resnet = load_resnet_checkpoint(model_dir / "resnet18_stage1_best.pt", 2)
+    model_s2_resnet = load_resnet_checkpoint(model_dir / "resnet18_stage2_best.pt", 2)
+    model_s1_gal = load_galaxycnn_checkpoint(model_dir / "galaxycnn_stage1_best.pt", 2)
+    model_s2_gal = load_galaxycnn_checkpoint(model_dir / "galaxycnn_stage2_best.pt", 2)
 
-    ckpt_s2 = torch.load(
-    model_dir / "resnet18_stage2_best.pt",
-    map_location="cpu",
-    weights_only=False,
-)
-    model_s2 = make_resnet18(num_classes=2)
-    model_s2.load_state_dict(ckpt_s2["model_state"])
+    res_s1_resnet = eval_model_full(model_s1_resnet, s1_test_dl, s1_id_to_label)
+    res_s2_resnet = eval_model_full(model_s2_resnet, s2_test_dl, s2_id_to_label)
+    res_s1_gal = eval_model_full(model_s1_gal, s1_test_dl, s1_id_to_label)
+    res_s2_gal = eval_model_full(model_s2_gal, s2_test_dl, s2_id_to_label)
 
-    res_s1 = eval_model_full(model_s1, s1_test_dl, s1_id_to_label)
-    res_s2 = eval_model_full(model_s2, s2_test_dl, s2_id_to_label)
+    res_s1_resnet.to_csv(eval_dir / "stage1_resnet_eval.csv", index=False)
+    res_s2_resnet.to_csv(eval_dir / "stage2_resnet_eval.csv", index=False)
+    res_s1_gal.to_csv(eval_dir / "stage1_galaxycnn_eval.csv", index=False)
+    res_s2_gal.to_csv(eval_dir / "stage2_galaxycnn_eval.csv", index=False)
 
-    res_s1.to_csv(eval_dir / "stage1_resnet_eval.csv", index=False)
-    res_s2.to_csv(eval_dir / "stage2_resnet_eval.csv", index=False)
+    metrics = {
+        "stage1_resnet_accuracy": compute_accuracy(res_s1_resnet),
+        "stage2_resnet_accuracy": compute_accuracy(res_s2_resnet),
+        "stage1_galaxycnn_accuracy": compute_accuracy(res_s1_gal),
+        "stage2_galaxycnn_accuracy": compute_accuracy(res_s2_gal),
+        "num_stage1_test_rows": int(len(res_s1_resnet)),
+        "num_stage2_test_rows": int(len(res_s2_resnet)),
+    }
 
-    print(f"Saved: {eval_dir / 'stage1_resnet_eval.csv'}")
-    print(f"Saved: {eval_dir / 'stage2_resnet_eval.csv'}")
+    with open(eval_dir / "metrics.json", "w") as f:
+        json.dump(metrics, f, indent=2)
+
+    print("Saved evaluation outputs:")
+    print(eval_dir / "stage1_resnet_eval.csv")
+    print(eval_dir / "stage2_resnet_eval.csv")
+    print(eval_dir / "stage1_galaxycnn_eval.csv")
+    print(eval_dir / "stage2_galaxycnn_eval.csv")
+    print(eval_dir / "metrics.json")
+    print(json.dumps(metrics, indent=2))
+
 
 if __name__ == "__main__":
     args = parse_args()

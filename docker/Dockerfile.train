@@ -23,8 +23,9 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY src ./src
 COPY scripts ./scripts
+COPY pipelines ./pipelines
 COPY README.md ./
 
-RUN mkdir -p /app/data /app/artifacts/models /app/artifacts/evaluations
+RUN mkdir -p /app/data /app/artifacts/models /app/artifacts/evaluations /opt/ml/model /opt/ml/output/data
 
-ENTRYPOINT ["python", "scripts/train_models.py"]
+ENTRYPOINT ["python"]
