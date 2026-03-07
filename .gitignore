@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.env
+data/raw/*
+data/interim/*
+data/processed/*
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+artifacts/models/*.pt
+artifacts/evaluations/*.csv
+artifacts/figures/*
+!artifacts/models/.gitkeep
+!artifacts/evaluations/.gitkeep
+!artifacts/figures/.gitkeep
