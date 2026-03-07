@@ -15,7 +15,7 @@ phases:
       - echo "Entered install phase"
       - python --version || true
       - aws --version
-      - echo "Commit: ${CODEBUILD_RESOLVED_SOURCE_VERSION:-unknown}"
+      - echo "Commit ${CODEBUILD_RESOLVED_SOURCE_VERSION:-unknown}"
 
   pre_build:
     commands:
