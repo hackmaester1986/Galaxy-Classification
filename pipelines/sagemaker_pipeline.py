@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import boto3
 import sagemaker
 from sagemaker.workflow.parameters import ParameterInteger, ParameterString
@@ -104,7 +102,7 @@ def get_pipeline(
 
     # ---------- Evaluation Step ----------
     eval_processor = ScriptProcessor(
-        image_uri=image_uri,
+        image_uri=image_uri_param,
         command=["python"],
         role=role,
         instance_count=1,
@@ -194,6 +192,7 @@ def get_pipeline(
         name=pipeline_name,
         parameters=[
             input_csv_s3_uri,
+            image_uri_param,
             model_approval_status,
             instance_type,
             processing_instance_type,
