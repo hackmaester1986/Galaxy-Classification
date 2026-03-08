@@ -6,42 +6,70 @@ env:
     IMAGE_REPO_NAME: galaxy-classifier-train
     DOCKERFILE_PATH: docker/Dockerfile.train
     AWS_DEFAULT_REGION: us-east-1
+    SAGEMAKER_PIPELINE_NAME: galaxy-classifier-pipeline
+    INPUT_CSV_S3_URI: s3://sagemaker-us-east-1-587403180437/galaxy-classifier/data/processed/all_data.csv
+    TRAINING_INSTANCE_TYPE: ml.g5.xlarge
+    PROCESSING_INSTANCE_TYPE: ml.m5.xlarge
+    EPOCHS_STAGE1: "2"
+    EPOCHS_STAGE2: "5"
+    BATCH_SIZE: "32"
+    MODEL_APPROVAL_STATUS: PendingManualApproval
 
 phases:
   install:
     commands:
-      - 'echo "Entered install phase"'
-      - 'python --version || true'
-      - 'aws --version'
-      - 'echo "Commit ${CODEBUILD_RESOLVED_SOURCE_VERSION:-unknown}"'
+      - echo "Entered install phase"
+      - python --version || true
+      - aws --version
+      - echo "Commit ${CODEBUILD_RESOLVED_SOURCE_VERSION:-unknown}"
 
   pre_build:
     commands:
-      - 'echo "Entered pre_build phase"'
-      - 'ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)'
-      - 'ECR_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"'
-      - 'IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"'
-      - 'SHORT_TAG=$(echo "$IMAGE_TAG" | cut -c1-7)'
-      - 'echo "ECR URI $ECR_URI"'
-      - 'echo "Image tag $IMAGE_TAG"'
-      - 'aws ecr describe-repositories --repository-names "$IMAGE_REPO_NAME" >/dev/null 2>&1 || aws ecr create-repository --repository-name "$IMAGE_REPO_NAME"'
-      - 'aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"'
+      - echo "Entered pre_build phase"
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - ECR_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
+      - IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"
+      - SHORT_TAG=$(echo "$IMAGE_TAG" | cut -c1-7)
+      - IMAGE_URI="${ECR_URI}:${SHORT_TAG}"
+      - echo "ECR URI $ECR_URI"
+      - echo "Image tag $IMAGE_TAG"
+      - echo "Image URI $IMAGE_URI"
+      - aws ecr describe-repositories --repository-names "$IMAGE_REPO_NAME" >/dev/null 2>&1 || aws ecr create-repository --repository-name "$IMAGE_REPO_NAME"
+      - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
 
   build:
     commands:
-      - 'echo "Entered build phase"'
-      - 'docker build -f "$DOCKERFILE_PATH" -t "${IMAGE_REPO_NAME}:${SHORT_TAG}" .'
-      - 'docker tag "${IMAGE_REPO_NAME}:${SHORT_TAG}" "${ECR_URI}:${SHORT_TAG}"'
-      - 'docker tag "${IMAGE_REPO_NAME}:${SHORT_TAG}" "${ECR_URI}:latest"'
+      - echo "Entered build phase"
+      - docker build -f "$DOCKERFILE_PATH" -t "${IMAGE_REPO_NAME}:${SHORT_TAG}" .
+      - docker tag "${IMAGE_REPO_NAME}:${SHORT_TAG}" "${ECR_URI}:${SHORT_TAG}"
+      - docker tag "${IMAGE_REPO_NAME}:${SHORT_TAG}" "${ECR_URI}:latest"
 
   post_build:
     commands:
-      - 'echo "Entered post_build phase"'
-      - 'docker push "${ECR_URI}:${SHORT_TAG}"'
-      - 'docker push "${ECR_URI}:latest"'
-      - 'printf ''{"ImageURI":"%s"}'' "${ECR_URI}:${SHORT_TAG}" > imageDetail.json'
-      - 'echo "Wrote imageDetail.json"'
-      - 'cat imageDetail.json'
+      - echo "Entered post_build phase"
+      - docker push "${ECR_URI}:${SHORT_TAG}"
+      - docker push "${ECR_URI}:latest"
+      - printf '{"ImageURI":"%s"}' "${IMAGE_URI}" > imageDetail.json
+      - echo "Wrote imageDetail.json"
+      - cat imageDetail.json
+      - echo "Starting SageMaker pipeline execution"
+      - |
+        EXECUTION_ARN=$(aws sagemaker start-pipeline-execution \
+          --pipeline-name "$SAGEMAKER_PIPELINE_NAME" \
+          --pipeline-execution-display-name "galaxy-${SHORT_TAG}" \
+          --pipeline-parameters \
+            Name=InputCsvS3Uri,Value="$INPUT_CSV_S3_URI" \
+            Name=ImageUri,Value="$IMAGE_URI" \
+            Name=TrainingInstanceType,Value="$TRAINING_INSTANCE_TYPE" \
+            Name=ProcessingInstanceType,Value="$PROCESSING_INSTANCE_TYPE" \
+            Name=EpochsStage1,Value="$EPOCHS_STAGE1" \
+            Name=EpochsStage2,Value="$EPOCHS_STAGE2" \
+            Name=BatchSize,Value="$BATCH_SIZE" \
+            Name=ModelApprovalStatus,Value="$MODEL_APPROVAL_STATUS" \
+          --query PipelineExecutionArn \
+          --output text)
+      - echo "Started SageMaker pipeline execution $EXECUTION_ARN"
+
 artifacts:
   files:
     - imageDetail.json
