@@ -10,7 +10,6 @@ from sagemaker.workflow.functions import JsonGet
 from sagemaker.workflow.conditions import ConditionGreaterThanOrEqualTo
 from sagemaker.workflow.condition_step import ConditionStep
 from sagemaker.workflow.pipeline_context import PipelineSession
-from sagemaker.workflow.model_step import RegisterModel
 from sagemaker.processing import ProcessingInput, ProcessingOutput, ScriptProcessor
 from sagemaker.estimator import Estimator
 from sagemaker.inputs import TrainingInput
@@ -36,6 +35,11 @@ def get_pipeline(
     input_csv_s3_uri = ParameterString(
         name="InputCsvS3Uri",
         default_value=f"s3://{default_bucket}/galaxy-classifier/data/processed/all_data.csv",
+    )
+
+    image_uri_param = ParameterString(
+        name="ImageUri",
+        default_value=image_uri,
     )
 
     model_approval_status = ParameterString(
@@ -70,7 +74,7 @@ def get_pipeline(
 
     # ---------- Training Step ----------
     estimator = Estimator(
-        image_uri=image_uri,
+        image_uri=image_uri_param,
         role=role,
         instance_count=1,
         instance_type=instance_type,

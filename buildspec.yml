@@ -42,7 +42,6 @@ phases:
       - 'printf ''{"ImageURI":"%s"}'' "${ECR_URI}:${SHORT_TAG}" > imageDetail.json'
       - 'echo "Wrote imageDetail.json"'
       - 'cat imageDetail.json'
-
 artifacts:
   files:
     - imageDetail.json
