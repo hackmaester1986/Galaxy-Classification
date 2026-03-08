@@ -8,7 +8,7 @@ env:
     AWS_DEFAULT_REGION: us-east-1
     SAGEMAKER_PIPELINE_NAME: galaxy-classifier-pipeline
     INPUT_CSV_S3_URI: s3://sagemaker-us-east-1-587403180437/galaxy-classifier/data/processed/all_data.csv
-    TRAINING_INSTANCE_TYPE: ml.g5.xlarge
+    TRAINING_INSTANCE_TYPE: ml.g4dn.2xlarge
     PROCESSING_INSTANCE_TYPE: ml.m5.xlarge
     EPOCHS_STAGE1: "2"
     EPOCHS_STAGE2: "5"
