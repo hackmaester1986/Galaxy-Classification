@@ -3,7 +3,7 @@ FROM public.ecr.aws/docker/library/python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
-ENV PYTHONPATH=/app/src
+ENV PYTHONPATH=/app/src:/app
 
 WORKDIR /app
 
@@ -26,6 +26,10 @@ COPY scripts ./scripts
 COPY pipelines ./pipelines
 COPY README.md ./
 
-RUN mkdir -p /app/data /app/artifacts/models /app/artifacts/evaluations /opt/ml/model /opt/ml/output/data
+RUN mkdir -p /app/data \
+    /app/artifacts/models \
+    /app/artifacts/evaluations \
+    /opt/ml/model \
+    /opt/ml/output/data
 
 ENTRYPOINT ["python"]

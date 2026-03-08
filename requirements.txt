@@ -8,3 +8,5 @@ pillow
 tqdm
 kagglehub
 grad-cam
+boto3
+s3fs
