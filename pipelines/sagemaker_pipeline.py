@@ -144,7 +144,7 @@ def get_pipeline(
             "--input-csv", "/opt/ml/processing/input/data/all_data.csv",
             "--model-dir", "/opt/ml/processing/model",
             "--eval-dir", "/opt/ml/processing/evaluation",
-            "--batch-size", str(batch_size),
+            "--batch-size", batch_size.to_string(),
             "--num-workers", "2",
         ],
         property_files=[evaluation_report],
