@@ -13,7 +13,10 @@ from sagemaker.estimator import Estimator
 from sagemaker.inputs import TrainingInput
 from sagemaker.model_metrics import MetricsSource, ModelMetrics
 from sagemaker.workflow.step_collections import RegisterModel as RegisterModelStepCollection
-
+from sagemaker.workflow.steps import CreateModelStep
+from sagemaker.workflow.steps import TransformStep
+from sagemaker.workflow.model_step import ModelStep
+from sagemaker.model import Model
 
 def get_pipeline(
     region: str,
@@ -171,6 +174,23 @@ def get_pipeline(
         model_metrics=model_metrics,
     )
 
+    # ---------- Deployment Step (optional) ----------
+    model = Model(
+        image_uri=image_uri_param,
+        model_data=train_step.properties.ModelArtifacts.S3ModelArtifacts,
+        role=role,
+        sagemaker_session=sagemaker_session,
+    )
+
+    deploy_step = ModelStep(
+        name="DeployGalaxyClassifierEndpoint",
+        step_args=model.deploy(
+            initial_instance_count=1,
+            instance_type="ml.m5.large",
+            endpoint_name="galaxy-classifier-endpoint"
+        )
+    )
+
     # ---------- Metric Gate ----------
     cond_step = ConditionStep(
         name="AccuracyGate",
@@ -184,9 +204,10 @@ def get_pipeline(
                 right=0.70,
             )
         ],
-        if_steps=[register_step],
+        if_steps=[register_step,deploy_step],
         else_steps=[],
     )
+
 
     pipeline = Pipeline(
         name=pipeline_name,
