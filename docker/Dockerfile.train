@@ -32,4 +32,4 @@ RUN mkdir -p /app/data \
     /opt/ml/model \
     /opt/ml/output/data
 
-ENTRYPOINT ["python","/app/scripts/train_models.py"]
+ENTRYPOINT ["/app/train-entrypoint.sh"]
