@@ -46,7 +46,7 @@ def get_pipeline(
 
     instance_type = ParameterString(
         name="TrainingInstanceType",
-        default_value="ml.g4dn.xlarge",
+        default_value="ml.g4dn.2xlarge",
     )
 
     processing_instance_type = ParameterString(
