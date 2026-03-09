@@ -25,7 +25,9 @@ COPY src ./src
 COPY scripts ./scripts
 COPY pipelines ./pipelines
 COPY README.md ./
+
 COPY docker/train-entrypoint.sh /app/train-entrypoint.sh
+RUN chmod +x /app/train-entrypoint.sh
 
 RUN mkdir -p /app/data \
     /app/artifacts/models \
