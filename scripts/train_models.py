@@ -21,7 +21,7 @@ def parse_args():
     parser.add_argument("--output-dir", type=str, default="/opt/ml/output/data")
     parser.add_argument("--img-size", type=int, default=224)
     parser.add_argument("--batch-size", type=int, default=32)
-    parser.add_argument("--num-workers", type=int, default=2)
+    parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--epochs-stage1", type=int, default=2)
     parser.add_argument("--epochs-stage2", type=int, default=5)
     parser.add_argument("--lr", type=float, default=3e-4)

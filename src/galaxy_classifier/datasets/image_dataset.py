@@ -35,9 +35,19 @@ class ImgDFDataset(Dataset):
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
-        image_path = row["image_path"]
+        try:
+            image_path = row["image_path"]
 
-        img = self._load_image(image_path)
+
+            img = self._load_image(image_path)
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed loading image at idx={idx}, "
+                f"bucket={row.get('bucket', None)}, "
+                f"key={row.get('image_key', None)}, "
+                f"row={row.to_dict()}, "
+                f"error={repr(e)}"
+            ) from e
 
         if self.transform:
             img = self.transform(img)
