@@ -143,6 +143,13 @@ def main(args):
 
     print(f"Saved training summary to {output_dir / 'training_summary.json'}")
 
+    saved_models = sorted(model_dir.glob("*"))
+    print("Model dir:", model_dir)
+    print("Model dir contents:", [p.name for p in saved_models])
+
+    if not saved_models:
+        raise RuntimeError(f"No files were saved to model_dir: {model_dir}")
+
 
 if __name__ == "__main__":
     args = parse_args()

@@ -131,6 +131,7 @@ def train_classifier(
                 "model_type": "resnet18",
                 "history": history,
             }, save_path_resnet)
+            print(f"Saved ResNet checkpoint to {save_path_resnet}")
 
         if acc_gal > best_acc_gal:
             best_acc_gal = acc_gal
@@ -141,5 +142,6 @@ def train_classifier(
                 "model_type": "galaxycnn",
                 "history": history,
             }, save_path_galaxycnn)
+            print(f"Saved GalaxyCNN checkpoint to {save_path_galaxycnn}")
 
     return model, best_acc, galaxycnn, best_acc_gal, history
