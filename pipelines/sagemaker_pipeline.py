@@ -14,6 +14,7 @@ from sagemaker.inputs import TrainingInput
 from sagemaker.model_metrics import MetricsSource, ModelMetrics
 from sagemaker.workflow.step_collections import RegisterModel as RegisterModelStepCollection
 
+
 def get_pipeline(
     region: str,
     role: str,
@@ -79,7 +80,7 @@ def get_pipeline(
         sagemaker_session=sagemaker_session,
         base_job_name=f"{base_job_prefix}-train",
         hyperparameters={
-            "input-csv": "/opt/ml/input/data/train/all_data_s3.csv",
+            "input-csv": "/opt/ml/input/data/train",
             "model-dir": "/opt/ml/model",
             "epochs-stage1": epochs_stage1,
             "epochs-stage2": epochs_stage2,
@@ -138,7 +139,7 @@ def get_pipeline(
         ],
         code="scripts/evaluate_models.py",
         job_arguments=[
-            "--input-csv", "/opt/ml/processing/input/data/all_data_s3.csv",
+            "--input-csv", "/opt/ml/processing/input/data",
             "--model-dir", "/opt/ml/processing/model",
             "--eval-dir", "/opt/ml/processing/evaluation",
             "--batch-size", batch_size.to_string(),
@@ -186,7 +187,6 @@ def get_pipeline(
         if_steps=[register_step],
         else_steps=[],
     )
-
 
     pipeline = Pipeline(
         name=pipeline_name,

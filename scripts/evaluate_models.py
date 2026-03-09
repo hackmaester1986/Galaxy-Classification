@@ -56,7 +56,17 @@ def main(args):
     print("Evaluation args:")
     print(json.dumps(vars(args), indent=2))
 
-    input_csv = Path(args.input_csv)
+
+    input_path = Path(args.input_csv)
+    if input_path.is_dir():
+        csv_files = sorted(input_path.glob("*.csv"))
+        if not csv_files:
+            raise FileNotFoundError(f"No CSV files found in {input_path}")
+        input_csv = csv_files[0]
+    else:
+        input_csv = input_path
+
+    print(f"Reading training CSV from: {input_csv}")
     model_dir = Path(args.model_dir)
     eval_dir = Path(args.eval_dir)
 

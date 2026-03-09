@@ -16,7 +16,7 @@ from galaxy_classifier.models.train import train_classifier
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train stage 1 and stage 2 galaxy classifiers.")
-    parser.add_argument("--input-csv", type=str, default="/opt/ml/input/data/train/all_data.csv")
+    parser.add_argument("--input-csv", type=str, default="/opt/ml/input/data/train/all_data_s3.csv")
     parser.add_argument("--model-dir", type=str, default="/opt/ml/model")
     parser.add_argument("--output-dir", type=str, default="/opt/ml/output/data")
     parser.add_argument("--img-size", type=int, default=224)
@@ -37,7 +37,18 @@ def main(args):
     print("Training args:")
     print(json.dumps(vars(args), indent=2))
 
-    input_csv = Path(args.input_csv)
+
+    input_path = Path(args.input_csv)
+
+    if input_path.is_dir():
+        csv_files = sorted(input_path.glob("*.csv"))
+        if not csv_files:
+            raise FileNotFoundError(f"No CSV files found in {input_path}")
+        input_csv = csv_files[0]
+    else:
+        input_csv = input_path
+
+    print(f"Reading training CSV from: {input_csv}")
     model_dir = Path(args.model_dir)
     output_dir = Path(args.output_dir)
 
