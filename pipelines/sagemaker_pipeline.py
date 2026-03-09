@@ -31,7 +31,7 @@ def get_pipeline(
     # ---------- Parameters ----------
     input_csv_s3_uri = ParameterString(
         name="InputCsvS3Uri",
-        default_value=f"s3://{default_bucket}/galaxy-classifier/data/processed/all_data.csv",
+        default_value=f"s3://{default_bucket}/galaxy-classifier/data/processed/all_data_s3.csv",
     )
 
     image_uri_param = ParameterString(
@@ -79,7 +79,7 @@ def get_pipeline(
         sagemaker_session=sagemaker_session,
         base_job_name=f"{base_job_prefix}-train",
         hyperparameters={
-            "input-csv": "/opt/ml/input/data/train/all_data.csv",
+            "input-csv": "/opt/ml/input/data/train/all_data_s3.csv",
             "model-dir": "/opt/ml/model",
             "epochs-stage1": epochs_stage1,
             "epochs-stage2": epochs_stage2,
@@ -138,7 +138,7 @@ def get_pipeline(
         ],
         code="scripts/evaluate_models.py",
         job_arguments=[
-            "--input-csv", "/opt/ml/processing/input/data/all_data.csv",
+            "--input-csv", "/opt/ml/processing/input/data/all_data_s3.csv",
             "--model-dir", "/opt/ml/processing/model",
             "--eval-dir", "/opt/ml/processing/evaluation",
             "--batch-size", batch_size.to_string(),
