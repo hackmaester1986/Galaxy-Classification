@@ -85,7 +85,7 @@ def get_pipeline(
             "epochs-stage1": epochs_stage1,
             "epochs-stage2": epochs_stage2,
             "batch-size": batch_size,
-            "num-workers": 2,
+            "num-workers": 0,
         },
     )
 
