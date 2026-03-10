@@ -7,6 +7,8 @@ import argparse
 import json
 import pandas as pd
 import torch
+import tarfile
+from pathlib import Path
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
@@ -52,6 +54,17 @@ def load_galaxycnn_checkpoint(path: Path, num_classes: int):
     return model
 
 
+def extract_model_artifact(model_dir: Path) -> None:
+    tar_path = model_dir / "model.tar.gz"
+    if tar_path.exists():
+        print(f"Extracting model artifact: {tar_path}")
+        with tarfile.open(tar_path, "r:gz") as tar:
+            tar.extractall(path=model_dir)
+        print("Model dir after extract:", [p.name for p in model_dir.iterdir()])
+    else:
+        print("No model.tar.gz found. Model dir contents:", [p.name for p in model_dir.iterdir()])
+
+
 def main(args):
     print("Evaluation args:")
     print(json.dumps(vars(args), indent=2))
@@ -68,6 +81,7 @@ def main(args):
 
     print(f"Reading training CSV from: {input_csv}")
     model_dir = Path(args.model_dir)
+    extract_model_artifact(model_dir)
     eval_dir = Path(args.eval_dir)
 
     eval_dir.mkdir(parents=True, exist_ok=True)
