@@ -13,7 +13,7 @@ from sagemaker.estimator import Estimator
 from sagemaker.inputs import TrainingInput
 from sagemaker.model_metrics import MetricsSource, ModelMetrics
 from sagemaker.workflow.step_collections import RegisterModel as RegisterModelStepCollection
-
+from sagemaker.workflow.steps import CacheConfig
 
 def get_pipeline(
     region: str,
@@ -89,6 +89,11 @@ def get_pipeline(
         },
     )
 
+    cache_config = CacheConfig(
+        enable_caching=True,
+        expire_after="30d"
+    )
+
     train_step = TrainingStep(
         name="TrainGalaxyClassifier",
         estimator=estimator,
@@ -98,6 +103,7 @@ def get_pipeline(
                 content_type="text/csv",
             )
         },
+        cache_config=cache_config
     )
 
     # ---------- Evaluation Step ----------
