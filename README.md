@@ -125,8 +125,8 @@ Metrics include:
 
 Example confusion matrix:
 
-elliptical  disk
-2633        8
+elliptical  disk  
+2633        8 
 15          689
 
 # Grad-CAM Visualization
@@ -146,7 +146,6 @@ python scripts/gradcam_demo.py \
   --model-path artifacts/models/resnet18_stage2_best.pt \
   --selection incorrect \
   --num-examples 5
----
 
 ## Repository Structure
 
