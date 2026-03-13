@@ -125,9 +125,12 @@ Metrics include:
 
 Example confusion matrix:
 
-elliptical disk
-2633       8
-15         689
+### Example Confusion Matrix (Stage 2 ResNet)
+
+|               | Predicted Elliptical | Predicted Disk |
+|---------------|----------------------|---------------|
+| **True Elliptical** | 2633 | 8 |
+| **True Disk**       | 15   | 689 |
 
 # Grad-CAM Visualization
 
