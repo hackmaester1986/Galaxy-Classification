@@ -125,9 +125,9 @@ Metrics include:
 
 Example confusion matrix:
 
-elliptical  disk  
-2633        8 
-15          689
+elliptical disk
+2633       8
+15         689
 
 # Grad-CAM Visualization
 
