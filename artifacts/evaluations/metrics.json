@@ -1,0 +1,106 @@
+{
+  "stage1": {
+    "resnet": {
+      "precision_macro": 0.9867309225861858,
+      "recall_macro": 0.9897246733207965,
+      "f1_macro": 0.9882227335852547,
+      "precision_weighted": 0.9980070696847012,
+      "recall_weighted": 0.998,
+      "f1_weighted": 0.9980030659349058,
+      "confusion_matrix": {
+        "labels": [
+          "other",
+          "galaxy"
+        ],
+        "matrix": [
+          [
+            152,
+            3
+          ],
+          [
+            4,
+            3341
+          ]
+        ]
+      },
+      "num_rows": 3500
+    },
+    "galaxycnn": {
+      "precision_macro": 0.9833762728499571,
+      "recall_macro": 0.9863493900380925,
+      "f1_macro": 0.9848578003238988,
+      "precision_weighted": 0.9974373871742293,
+      "recall_weighted": 0.9974285714285714,
+      "f1_weighted": 0.9974325133448789,
+      "confusion_matrix": {
+        "labels": [
+          "other",
+          "galaxy"
+        ],
+        "matrix": [
+          [
+            151,
+            4
+          ],
+          [
+            5,
+            3340
+          ]
+        ]
+      },
+      "num_rows": 3500
+    }
+  },
+  "stage2": {
+    "resnet": {
+      "precision_macro": 0.9914287927977912,
+      "recall_macro": 0.9878320130976559,
+      "f1_macro": 0.9896172533758603,
+      "precision_weighted": 0.9931119008176743,
+      "recall_weighted": 0.9931240657698057,
+      "f1_weighted": 0.9931114383589221,
+      "confusion_matrix": {
+        "labels": [
+          "elliptical",
+          "disk"
+        ],
+        "matrix": [
+          [
+            2633,
+            8
+          ],
+          [
+            15,
+            689
+          ]
+        ]
+      },
+      "num_rows": 3345
+    },
+    "galaxycnn": {
+      "precision_macro": 0.8848288519152474,
+      "recall_macro": 0.9203241175002581,
+      "f1_macro": 0.9007926751215769,
+      "precision_weighted": 0.9358400424107669,
+      "recall_weighted": 0.9309417040358744,
+      "f1_weighted": 0.9324622353205977,
+      "confusion_matrix": {
+        "labels": [
+          "elliptical",
+          "disk"
+        ],
+        "matrix": [
+          [
+            2479,
+            162
+          ],
+          [
+            69,
+            635
+          ]
+        ]
+      },
+      "num_rows": 3345
+    }
+  }
+}

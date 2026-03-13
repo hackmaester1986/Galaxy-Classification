@@ -11,6 +11,10 @@ data/processed/*
 artifacts/models/*.pt
 artifacts/evaluations/*.csv
 artifacts/figures/*
-!artifacts/models/.gitkeep
-!artifacts/evaluations/.gitkeep
+artifacts/evaluations/stage_dfs
+artifacts/evaluations/stage_dfs/*.csv
+!artifacts/figures/gradcam
+!artifacts/figures/gradcam/*
+!artifacts/figures/gradcam_disk
+!artifacts/figures/gradcam_disk/*
 !artifacts/figures/.gitkeep

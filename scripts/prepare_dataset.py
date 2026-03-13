@@ -29,16 +29,30 @@ def parse_args():
     parser.add_argument("--n-neg", type=int, default=20000)
 
     parser.add_argument("--is-sagemaker", action="store_true")
-    parser.add_argument("--s3-bucket", type=str, default="sagemaker-us-east-1-587403180437")
-    parser.add_argument("--s3-image-prefix", type=str, default="galaxy-classifier/data/images")
-    parser.add_argument(
-        "--mapping-s3-uri",
-        type=str,
-        default="s3://sagemaker-us-east-1-587403180437/galaxy-classifier/data/raw/gz2_filename_mapping.csv",
-    )
-    parser.add_argument("--region", type=str, default="us-east-1")
 
-    return parser.parse_args()
+    parser.add_argument("--s3-bucket", type=str, default=None)
+    parser.add_argument("--s3-image-prefix", type=str, default=None)
+    parser.add_argument("--mapping-s3-uri", type=str, default=None)
+    parser.add_argument("--region", type=str, default=None)
+
+    args = parser.parse_args()
+
+    if args.is_sagemaker:
+        missing = []
+        if not args.s3_bucket:
+            missing.append("--s3-bucket")
+        if not args.s3_image_prefix:
+            missing.append("--s3-image-prefix")
+        if not args.mapping_s3_uri:
+            missing.append("--mapping-s3-uri")
+
+        if missing:
+            parser.error(
+                "When --is-sagemaker is set, the following arguments are required: "
+                + ", ".join(missing)
+            )
+
+    return args
 
 
 def build_s3_path(bucket: str, key: str) -> str:

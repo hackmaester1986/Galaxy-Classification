@@ -3,6 +3,7 @@ import pandas as pd
 import torch
 import torch.nn.functional as F
 from galaxy_classifier.config import DEVICE
+from sklearn.metrics import precision_recall_fscore_support, confusion_matrix
 
 @torch.no_grad()
 def eval_model_full(model, dl, id_to_label):
@@ -44,3 +45,32 @@ def eval_model_full(model, dl, id_to_label):
         results_df[f"prob_{class_name}"] = all_probs[:, class_id]
 
     return results_df
+
+def classification_metrics(results_df: pd.DataFrame) -> dict:
+    y_true = results_df["y_true"].to_numpy()
+    y_pred = results_df["y_pred"].to_numpy()
+
+    precision_macro, recall_macro, f1_macro, _ = precision_recall_fscore_support(
+        y_true, y_pred, average="macro", zero_division=0
+    )
+    precision_weighted, recall_weighted, f1_weighted, _ = precision_recall_fscore_support(
+        y_true, y_pred, average="weighted", zero_division=0
+    )
+
+    return {
+        "precision_macro": float(precision_macro),
+        "recall_macro": float(recall_macro),
+        "f1_macro": float(f1_macro),
+        "precision_weighted": float(precision_weighted),
+        "recall_weighted": float(recall_weighted),
+        "f1_weighted": float(f1_weighted),
+    }
+
+def confusion_matrix_dict(results_df: pd.DataFrame, id_to_label: dict[int, str]) -> dict:
+    labels = sorted(id_to_label.keys())
+    cm = confusion_matrix(results_df["y_true"], results_df["y_pred"], labels=labels)
+
+    return {
+        "labels": [id_to_label[i] for i in labels],
+        "matrix": cm.tolist(),
+    }

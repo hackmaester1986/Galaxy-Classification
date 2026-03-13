@@ -53,22 +53,6 @@ phases:
       - echo "Wrote imageDetail.json"
       - cat imageDetail.json
       - echo "Starting SageMaker pipeline execution"
-      - |
-        EXECUTION_ARN=$(aws sagemaker start-pipeline-execution \
-          --pipeline-name "$SAGEMAKER_PIPELINE_NAME" \
-          --pipeline-execution-display-name "galaxy-${SHORT_TAG}" \
-          --pipeline-parameters \
-            Name=InputCsvS3Uri,Value="$INPUT_CSV_S3_URI" \
-            Name=ImageUri,Value="$IMAGE_URI" \
-            Name=TrainingInstanceType,Value="$TRAINING_INSTANCE_TYPE" \
-            Name=ProcessingInstanceType,Value="$PROCESSING_INSTANCE_TYPE" \
-            Name=EpochsStage1,Value="$EPOCHS_STAGE1" \
-            Name=EpochsStage2,Value="$EPOCHS_STAGE2" \
-            Name=BatchSize,Value="$BATCH_SIZE" \
-            Name=ModelApprovalStatus,Value="$MODEL_APPROVAL_STATUS" \
-          --query PipelineExecutionArn \
-          --output text)
-      - echo "Started SageMaker pipeline execution $EXECUTION_ARN"
 
 artifacts:
   files:

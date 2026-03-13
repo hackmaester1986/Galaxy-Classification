@@ -68,6 +68,14 @@ def main(args):
     )
     stage_dfs = build_stage_dfs(train_df, val_df, test_df)
 
+    stage_dir = output_dir / "stage_dfs"
+    stage_dir.mkdir(parents=True, exist_ok=True)
+
+    for name, df_stage in stage_dfs.items():
+        path = stage_dir / f"{name}.csv"
+        df_stage.to_csv(path, index=False)
+        print(f"Saved {name} -> {path}")
+
     train_tf = transforms.Compose([
         transforms.Resize(256),
         transforms.RandomResizedCrop(args.img_size, scale=(0.7, 1.0)),
